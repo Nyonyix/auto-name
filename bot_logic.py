@@ -69,13 +69,13 @@ async def assembleData(message: discord.Message, character: str, voice: str) -> 
     new_data = {}
 
     if exists == True:
-        new_data[guild] = {}
-        new_data[guild][character] = {}
-        new_data[guild][character]["character_lower"] = character.lower()
-        new_data[guild][character]["character"] = character_data["name"]["first"]
-        new_data[guild][character]["character_id"] = character_data["character_id"]
-        new_data[guild][character]["discord_user_id"] = user.id
-        new_data[guild][character]["with_voice"] = with_voice
+        new_data[str(guild)] = {}
+        new_data[str(guild)][str(character)] = {}
+        new_data[str(guild)][str(character)]["character_lower"] = character.lower()
+        new_data[str(guild)][str(character)]["character"] = character_data["name"]["first"]
+        new_data[str(guild)][str(character)]["character_id"] = character_data["character_id"]
+        new_data[str(guild)][str(character)]["discord_user_id"] = user.id
+        new_data[str(guild)][str(character)]["with_voice"] = with_voice
 
         return new_data
     else:
@@ -84,40 +84,12 @@ async def assembleData(message: discord.Message, character: str, voice: str) -> 
 
 
 
-# def alreadyRegistered(guild_id: int, character_id: int) -> bool:
-#     """
-#     Checks with json file if this ps2 character has already been registered with this user in this server
-#     """
-#     filename = "registered_users.json"
-
-#     if os.path.exists(filename):
-#         with open(filename, 'r') as f:
-#             in_json = json.load(f)
-#             f.close()
-
-#         for k1, v1 in in_json.items():
-#             print(v1)
-#             if guild_id == k1:
-#                 for k2, v2 in v1.items():
-#                     print(f"2nd For Loop - {k2} : {v2}")
-#                     if k2 == "character_id" and v2 == character_id:
-#                         print("True")
-#                         return True
-#                     else:
-#                         print("False")
-#                         return False
-#     else:
-#         print(f"ERR: No file to compare. '{filename}' not found")
-#         return False
-
-
-
 def alreadyRegistered(guild_id: int, character: str, json_file: dict) -> bool:
     """
     Checks if the character has already been registered within this server
     """
     try:
-        json_file[guild_id][character]
+        json_file[str(guild_id)][str(character)]
         return True
     except KeyError:
         return False
@@ -132,23 +104,30 @@ async def putTogether(message: discord.Message, character: str, voice: str) -> b
     character_data = await assembleData(message, character, voice)
     filename = "registered_users.json"
 
-    with open(filename, 'r') as f:
-        json_file = json.load(f)
-        f.close()
+    if os.path.exists(filename):
+        with open(filename, 'r') as f:
+            json_file = json.load(f)
+            f.close()
+    else:
+        dummy = {}
+        json_file = {}
+        with open(filename, 'w') as f:
+            json.dump(dummy, f)
+            f.close()
 
     is_registered = alreadyRegistered(guild_id, character, json_file)
 
     try:
-        json_file[guild_id]
+        json_file[str(guild_id)]
     except KeyError:
-        json_file[guild_id] = {}
+        json_file[str(guild_id)] = {}
 
     try:
-        json_file[guild_id][character]
+        json_file[str(guild_id)][str(character)]
     except KeyError:
-        json_file[guild_id][character] = {}
+        json_file[str(guild_id)][str(character)] = {}
 
-    json_file[guild_id][character] = character_data[guild_id][character]
+    json_file[str(guild_id)][str(character)] = character_data[str(guild_id)][str(character)]
 
     print(json.dumps(json_file, indent=4))
 
@@ -241,3 +220,32 @@ class BotClient(discord.Client):
 #         registered_users["character"]["guild_id"] = user.guild.id
 #         json.dump(registered_users, f)
 #         f.close()
+
+
+
+
+# def alreadyRegistered(guild_id: int, character_id: int) -> bool:
+#     """
+#     Checks with json file if this ps2 character has already been registered with this user in this server
+#     """
+#     filename = "registered_users.json"
+
+#     if os.path.exists(filename):
+#         with open(filename, 'r') as f:
+#             in_json = json.load(f)
+#             f.close()
+
+#         for k1, v1 in in_json.items():
+#             print(v1)
+#             if guild_id == k1:
+#                 for k2, v2 in v1.items():
+#                     print(f"2nd For Loop - {k2} : {v2}")
+#                     if k2 == "character_id" and v2 == character_id:
+#                         print("True")
+#                         return True
+#                     else:
+#                         print("False")
+#                         return False
+#     else:
+#         print(f"ERR: No file to compare. '{filename}' not found")
+#         return False
