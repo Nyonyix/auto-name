@@ -13,6 +13,31 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+filename = "registered_users.json"
+
+def openJsonFile(filename: str) -> dict:
+    """
+    Loads the specified json file into a 'dict'. If the file does not exist or is empty, The function return an empty dict.
+    """
+    out_json = {}
+    if os.path.exists(filename):
+        with open(filename, 'r') as f:
+            out_json = json.load(f)
+            f.close()
+    return out_json
+
+
+
+def saveJsonFile(filename: str, in_data: dict) -> bool:
+    """
+    Saves the specified dict to the specified file
+    """
+    with open(filename, 'w') as f:
+        json.dump(in_data, f)
+        f.close()
+
+
+
 async def getCharacterData(character: str) -> tuple:
     """
     Gathers character data from Planetside API
@@ -102,18 +127,7 @@ async def putTogether(message: discord.Message, character: str, voice: str) -> b
     """
     guild_id = message.guild.id
     character_data = await assembleData(message, character, voice)
-    filename = "registered_users.json"
-
-    if os.path.exists(filename):
-        with open(filename, 'r') as f:
-            json_file = json.load(f)
-            f.close()
-    else:
-        dummy = {}
-        json_file = {}
-        with open(filename, 'w') as f:
-            json.dump(dummy, f)
-            f.close()
+    json_file = openJsonFile(filename)
 
     is_registered = alreadyRegistered(guild_id, character, json_file)
 
@@ -134,9 +148,7 @@ async def putTogether(message: discord.Message, character: str, voice: str) -> b
     if is_registered == True:
         return False
     else:
-        with open(filename, 'w') as f:
-            json.dump(json_file, f)
-            f.close()
+        saveJsonFile(filename, json_file)
         return True
 
 
@@ -167,8 +179,42 @@ def stripCommand(command: str) -> tuple:
 
 
 
+async def register(message: discord.Message, command: list) -> None:
+    """
+    Was apart of the 'on_message' function, Now it's own
+    Now this serves as the IO hub between discord and the bot's logic functions
+    """
+    command[2] = command[2].lower()
+
+    # If the command arr has less than expected objects then it will return
+    # a 'missing arguments' response to discord.
+    try:
+        # If 'false' arg is missing, This injects 'true'
+        try:
+            command[3]
+        except IndexError:
+            command.append("true")
+
+        # Meat of the register command. If 'putTogether' return false, Character exists.
+        # If the function returns true, Character has been added to file.
+        user_registered = await putTogether(message, command[2].lower(), command[3])
+        if user_registered == False:
+            await message.channel.send(f"```{command[2]} has already been registered```")
+        elif user_registered == True:
+            await message.channel.send(f"```Character successfully registered```")
+
+    except IndexError:
+        print("Index exception")
+        await message.channel.send(f"```Missing Argument```")
+
+def removeRegister(message: discord.Message) -> bool:
+    guild_id = message.guild.id
+    pass
+
+
+
 class BotClient(discord.Client):
-    TOKEN = os.getenv("DISCORD_TOKEN") 
+    TOKEN = os.getenv("DISCORD_TOKEN")
 
     async def on_ready(self: discord.Client) -> None:
         print(f"{self.user} has connected to Discord")
@@ -197,37 +243,19 @@ class BotClient(discord.Client):
                 sub_commands = ["reg", "register", "test"]
 
                 # Register command check
-                if command[1] == sub_commands[0] or sub_commands[1]:
-
-                    # If the command arr has less than expected objects then it will return
-                    # a 'missing arguments' response to discord.
-                    try:
-                        # If 'false' arg is missing, This injects 'true'
-                        try:
-                            command[3]
-                        except IndexError:
-                            command.append("true")
-
-                        # Meat of the register command. If 'putTogether' return false, Character exists.
-                        # If the function returns true, Character has been added to file.
-                        user_registered = await putTogether(message, command[2].lower(), command[3])
-                        if user_registered == False:
-                            await message.channel.send(f"```{command[2]} has already been registered```")
-                        elif user_registered == True:
-                            await message.channel.send(f"```Character successfully registered```")
-
-                    except IndexError:
-                        await message.channel.send(f"```Missing Argument```")
-                else:
-                    await message.channel.send(f"```{command[1:len(command)]} are invalid arguments.```")
+                if command[1] in sub_commands[0:1]:
+                    await register(message, command)
 
                 # Test command check
-                if command[1] == sub_commands[2]:
+                elif command[1] == sub_commands[2]:
                     msg_to_send = discord.Embed(title= "Test")
                     msg_to_send.add_field(name= "Line 1", value= "Testing Text", inline= True)
                     msg_to_send.add_field(name= "Line 2", value= "Testing Text 2 Seeing what this does", inline= True)
+ 
+                    await message.channel.send(embed=msg_to_send)
 
-                    await message.channel.send(msg_to_send)
+                else:
+                    await message.channel.send(f"```{command[1:len(command)]} are invalid commands.```")
 
             else:
                 await message.channel.send("```Invalid Command. Missing arguments```")

@@ -1,0 +1,7 @@
+Changelog
+
+Commit 4:
+
+ - Turned the 'register' command into it's own function to act a IO hub between discord and bot.
+ - Commented some more stuff.
+ - Added propper read/write json functions
