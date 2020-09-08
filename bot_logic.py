@@ -137,6 +137,7 @@ async def putTogether(message: discord.Message, character: str, voice: str) -> b
         with open(filename, 'w') as f:
             json.dump(json_file, f)
             f.close()
+        return True
 
 
 
@@ -172,35 +173,71 @@ class BotClient(discord.Client):
     async def on_ready(self: discord.Client) -> None:
         print(f"{self.user} has connected to Discord")
 
+    # Event handler for listening to commands
     async def on_message(self: discord.Client, message: discord.Message) -> None:
+
+        # If the message is the bot it's self, It will ignore the message
         if message.author == self.user:
             return
 
+        # Base commands are the initial commands to be used, Most of the time '!auto-name is used
+        # and sub_commands are used for actual work to avoid conflicts with other bots.
+        # Example: "!auto-name(base_command) register(sub_command) example(arg1) false(arg2)"
+
+        # sub_commands are defined and checked with the message, If message does not contain a
+        # sub_command, It will return an 'invalid command' response to discord.
+
+        # The command is also converted into a arr of words for easier computation and return the command arr.
         base_commands = ["!auto-name"]
         command, has_extra_words = stripCommand(message.content)
 
+        # Checks if message is a base_command and has extra words afterwards
         if base_commands[0] == command[0]:
             if has_extra_words == True:
-                sub_commands = ["test"]
+                sub_commands = ["reg", "register", "test"]
 
-                if sub_commands[0] == command[1]:
+                # Register command check
+                if command[1] == sub_commands[0] or sub_commands[1]:
+
+                    # If the command arr has less than expected objects then it will return
+                    # a 'missing arguments' response to discord.
                     try:
+                        # If 'false' arg is missing, This injects 'true'
                         try:
                             command[3]
                         except IndexError:
                             command.append("true")
-                        if await putTogether(message, command[2].lower(), command[3]) == False:
-                            await message.channel.send(f"{command[2]} has already been registered")
+
+                        # Meat of the register command. If 'putTogether' return false, Character exists.
+                        # If the function returns true, Character has been added to file.
+                        user_registered = await putTogether(message, command[2].lower(), command[3])
+                        if user_registered == False:
+                            await message.channel.send(f"```{command[2]} has already been registered```")
+                        elif user_registered == True:
+                            await message.channel.send(f"```Character successfully registered```")
+
                     except IndexError:
                         await message.channel.send(f"```Missing Argument```")
                 else:
                     await message.channel.send(f"```{command[1:len(command)]} are invalid arguments.```")
+
+                # Test command check
+                if command[1] == sub_commands[2]:
+                    msg_to_send = discord.Embed(title= "Test")
+                    msg_to_send.add_field(name= "Line 1", value= "Testing Text", inline= True)
+                    msg_to_send.add_field(name= "Line 2", value= "Testing Text 2 Seeing what this does", inline= True)
+
+                    await message.channel.send(msg_to_send)
+
             else:
                 await message.channel.send("```Invalid Command. Missing arguments```")
-            
+
+        # Prints the received command from discord for debugging.
         print(f"Recived {message.content}")
 
 
+
+###END OF FILE DUMP###
 
 # def registerToFile(message: discord.Message, character: str) -> None:
 #     registered_users = {}
