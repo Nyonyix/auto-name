@@ -1,5 +1,9 @@
 Changelog
 
+Commit 5:
+
+ - Finished 'removeRegister' function
+
 Commit 4:
 
  - Turned the 'register' command into it's own function to act a IO hub between discord and bot.

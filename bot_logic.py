@@ -207,9 +207,22 @@ async def register(message: discord.Message, command: list) -> None:
         print("Index exception")
         await message.channel.send(f"```Missing Argument```")
 
-def removeRegister(message: discord.Message) -> bool:
+
+
+async def removeRegister(message: discord.Message, command: list) -> bool:
+    """
+    Removes a registered character
+    """
     guild_id = message.guild.id
-    pass
+    json_file = openJsonFile(filename)
+
+    if alreadyRegistered(guild_id, command[2], json_file) == True:
+        del json_file[str(guild_id)][str(command[2])]
+        saveJsonFile(filename, json_file)
+        await message.channel.send(f"```{command[2]} has been succefully removed```")
+    else:
+        await message.channel.send(f"```{command[2]} is not registered```")
+
 
 
 
@@ -240,14 +253,17 @@ class BotClient(discord.Client):
         # Checks if message is a base_command and has extra words afterwards
         if base_commands[0] == command[0]:
             if has_extra_words == True:
-                sub_commands = ["reg", "register", "test"]
+                sub_commands = ["reg", "register", "rm", "remove", "test"]
 
                 # Register command check
                 if command[1] in sub_commands[0:1]:
                     await register(message, command)
 
+                elif command[1] in sub_commands[2:3]:
+                    await removeRegister(message, command)
+
                 # Test command check
-                elif command[1] == sub_commands[2]:
+                elif command[1] == sub_commands[4]:
                     msg_to_send = discord.Embed(title= "Test")
                     msg_to_send.add_field(name= "Line 1", value= "Testing Text", inline= True)
                     msg_to_send.add_field(name= "Line 2", value= "Testing Text 2 Seeing what this does", inline= True)
