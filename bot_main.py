@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 def main() -> None:
 
     Bot = bot_logic.BotClient()
+    Bot.loop.create_task(bot_logic.botLoop())
     Bot.run(Bot.TOKEN)
 
 if __name__ == "__main__":

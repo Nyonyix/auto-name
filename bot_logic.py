@@ -169,11 +169,13 @@ def stripCommand(command: str) -> tuple:
      - Command string split into list of individual word strings (str)
      - If command has other words besides 'base_commands' (bool)
     """
+    command = command.lower()
     command = command.split()
     has_extra_words = False
 
     if len(command) >= 2:
         has_extra_words = True
+        return command, has_extra_words
 
     return command, has_extra_words
 
@@ -279,6 +281,53 @@ class BotClient(discord.Client):
         # Prints the received command from discord for debugging.
         print(f"Recived {message.content}")
 
+
+
+async def isCharacterOnline(character_id: int) -> bool:
+    http_session = aiohttp.ClientSession()
+    response_data = {}
+
+    url = f"http://census.daybreakgames.com/s:Nyonyix/get/ps2:v2/characters_online_status/?character_id={character_id}"
+
+    with async_timeout.timeout(10):
+        async with http_session.get(url) as response:
+            response_data = await response.json()
+            await http_session.close()
+
+    if response_data["returned"] != 1:
+        return False
+    else:
+        online_status = response_data["characters_online_status_list"][0]["online_status"]
+
+        if int(online_status) != 0:
+            return True
+        else:
+            return True
+
+
+
+async def botLoop() -> None:
+    """
+    Primary looping function of the bot that checks if a character is online, If a user is in voice
+    and where the user's nick is changed.
+    """ 
+    i = 0
+    while True:
+        json_file = openJsonFile(filename)
+
+        for guild, characters in json_file.items():
+            for char, values in characters.items():
+                online_status = isCharacterOnline(int(values["character_id"])
+
+                if online_status == True:
+                    print(f"{values["character"]} is online")
+                else:
+                    print(f"{values["character"]} is offline")
+
+        print(i)
+        await asyncio.sleep(10)
+        i += 1
+    
 
 
 ###END OF FILE DUMP###

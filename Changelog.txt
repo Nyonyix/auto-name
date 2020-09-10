@@ -1,5 +1,9 @@
 Changelog
 
+Commit 6:
+
+ - Started work on the main bot loop 'botLoop' function.
+
 Commit 5:
 
  - Finished 'removeRegister' function
