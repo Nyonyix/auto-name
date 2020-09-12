@@ -1,5 +1,9 @@
 Changelog
 
+Commit 7:
+ 
+ - Added online status checking functions 'getCharacterOnlineStatus' and 'isCharacterOnline'
+
 Commit 6:
 
  - Started work on the main bot loop 'botLoop' function.

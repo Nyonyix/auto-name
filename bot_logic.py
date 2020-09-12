@@ -50,7 +50,7 @@ async def getCharacterData(character: str) -> tuple:
     character_data = {}
     response_data = {}
     exists = False
-    url = f"http://census.daybreakgames.com/get/ps2:v2/character/?name.first_lower={character.lower()}"
+    url = f"http://census.daybreakgames.com/s:Nyonyix/get/ps2:v2/character/?name.first_lower={character.lower()}"
 
     with async_timeout.timeout(10):
         async with http_session.get(url) as response:
@@ -283,26 +283,38 @@ class BotClient(discord.Client):
 
 
 
-async def isCharacterOnline(character_id: int) -> bool:
+async def getCharacterOnlineStatus(character_id: list) -> list:
     http_session = aiohttp.ClientSession()
     response_data = {}
+    online_status = []
+    character_string = ""
 
-    url = f"http://census.daybreakgames.com/s:Nyonyix/get/ps2:v2/characters_online_status/?character_id={character_id}"
+    for char_id in character_id:
+        character_string += str(char_id) + ","
+
+    url = f"http://census.daybreakgames.com/s:Nyonyix/get/ps2:v2/characters_online_status/?character_id={character_string}"
+    print(url)
 
     with async_timeout.timeout(10):
         async with http_session.get(url) as response:
+            response._cache.clear()
             response_data = await response.json()
             await http_session.close()
 
-    if response_data["returned"] != 1:
+    if response_data["returned"] == 0:
         return False
     else:
-        online_status = response_data["characters_online_status_list"][0]["online_status"]
+        for returned_char in response_data["characters_online_status_list"]:
+            online_status.append(returned_char)
+        return online_status
 
-        if int(online_status) != 0:
-            return True
-        else:
-            return True
+
+
+def isCharacterOnline(character_dict: dict) -> bool:
+    if int(character_dict["online_status"]) == 0:
+        return False
+    else:
+        return True
 
 
 
@@ -316,13 +328,27 @@ async def botLoop() -> None:
         json_file = openJsonFile(filename)
 
         for guild, characters in json_file.items():
-            for char, values in characters.items():
-                online_status = isCharacterOnline(int(values["character_id"])
+            char_ids = []
+            char_names = []
+            online_status = False
+            character_dict_list = []
+            for values in characters.values():
+                char_ids.append(values["character_id"])
+                char_names.append(values["character"])
+            character_dict_list = await getCharacterOnlineStatus(char_ids)
+            
+            char_iter = 0
+            for char in character_dict_list:
+                online_status = isCharacterOnline(char)
 
                 if online_status == True:
-                    print(f"{values["character"]} is online")
+                    print(char)
+                    print(f"{char_names[char_iter]} is Online")
                 else:
-                    print(f"{values["character"]} is offline")
+                    print(char)
+                    print(f"{char_names[char_iter]} is Offline")
+                
+                char_iter += 1
 
         print(i)
         await asyncio.sleep(10)
