@@ -1,0 +1,23 @@
+Changelog
+
+Commit 8:
+
+ - Greatly optimised online checking, Now checks guild at a time instead of instead of individual.
+
+Commit 7:
+ 
+ - Added online status checking functions 'getCharacterOnlineStatus' and 'isCharacterOnline'
+
+Commit 6:
+
+ - Started work on the main bot loop 'botLoop' function.
+
+Commit 5:
+
+ - Finished 'removeRegister' function
+
+Commit 4:
+
+ - Turned the 'register' command into it's own function to act a IO hub between discord and bot.
+ - Commented some more stuff.
+ - Added propper read/write json functions
